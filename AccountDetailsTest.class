@@ -1,0 +1,664 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit4TestClass.java to edit this template
+ */
+package com.mycompany.messagesystem;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ *
+ * @author Student
+ */
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.After;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotEquals;
+
+public class MessageSystemTest {
+
+    private Message message1;
+    private Message message2;
+
+    @Before
+    public void setUp() {
+
+        // Reset static counter before each test
+        Message.resetTotalMessagesSent();
+
+        // Test Data 1
+        message1 = new Message(
+                "+27718693002",
+                "Hi Mike, can you join us for dinner tonight"
+        );
+
+        // Test Data 2
+        message2 = new Message(
+                "08575975889",
+                "Hi keegan, did you receive the payment?"
+        );
+    }
+
+    @After
+    public void tearDown() {
+
+        // Reset counter after tests
+        Message.resetTotalMessagesSent();
+    }
+
+    // ================= HELPER METHODS =================
+
+    private String validateMessageLength(String messageContent) {
+
+        int length = messageContent.length();
+
+        if (length > 250) {
+
+            int excess = length - 250;
+
+            return "Message exceeds 250 characters by "
+                    + excess
+                    + ", please reduce size";
+        }
+
+        return "message ready to send";
+    }
+
+    private String validateRecipientCell(Message msg) {
+
+        int res = msg.checkRecipientCell();
+
+        if (res == 1) {
+
+            return "cell phone number successfully captured";
+
+        } else {
+
+            return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again";
+        }
+    }
+
+    private String processMessageAction(String action) {
+
+        switch (action.toLowerCase()) {
+
+            case "send":
+                return "message successfully sent";
+
+            case "disregard":
+                return "press 0 to delete message";
+
+            case "store":
+                return "message successfully stored";
+
+            default:
+                return "invalid action";
+        }
+    }
+
+    // ================= CONSTRUCTOR TESTS =================
+
+    @Test
+    public void testMessageConstructor_ValidInputs() {
+
+        Message msg = new Message(
+                "+27718693002",
+                "Test message"
+        );
+
+        assertNotNull(msg);
+
+        assertEquals(
+                "+27718693002",
+                msg.getRecipient()
+        );
+
+        assertEquals(
+                "Test message",
+                msg.getMessageContent()
+        );
+    }
+
+    @Test
+    public void testMessageConstructor_EmptyMessage() {
+
+        Message msg = new Message(
+                "+27718693002",
+                ""
+        );
+
+        assertNotNull(msg);
+
+        assertEquals(
+                "",
+                msg.getMessageContent()
+        );
+    }
+
+    @Test
+    public void testMessageConstructor_EmptyRecipient() {
+
+        Message msg = new Message(
+                "",
+                "Test message"
+        );
+
+        assertNotNull(msg);
+
+        assertEquals(
+                "",
+                msg.getRecipient()
+        );
+    }
+
+    @Test
+    public void testMessageConstructor_NullValues() {
+
+        Message msg1 = new Message(
+                null,
+                "Test message"
+        );
+
+        assertNotNull(msg1);
+
+        Message msg2 = new Message(
+                "+27718693002",
+                null
+        );
+
+        assertNotNull(msg2);
+
+        Message msg3 = new Message(
+                null,
+                null
+        );
+
+        assertNotNull(msg3);
+    }
+
+    // ================= GETTER TESTS =================
+
+    @Test
+    public void testGetRecipient() {
+
+        assertEquals(
+                "+27718693002",
+                message1.getRecipient()
+        );
+
+        assertEquals(
+                "08575975889",
+                message2.getRecipient()
+        );
+    }
+
+    @Test
+    public void testGetMessageContent() {
+
+        assertEquals(
+                "Hi Mike, can you join us for dinner tonight",
+                message1.getMessageContent()
+        );
+
+        assertEquals(
+                "Hi keegan, did you receive the payment?",
+                message2.getMessageContent()
+        );
+    }
+
+    @Test
+    public void testGetMessageID() {
+
+        String id1 = message1.getMessageID();
+        String id2 = message2.getMessageID();
+
+        assertNotNull(id1);
+        assertNotNull(id2);
+
+        assertEquals(10, id1.length());
+        assertEquals(10, id2.length());
+
+        assertTrue(id1.matches("\\d{10}"));
+        assertTrue(id2.matches("\\d{10}"));
+
+        assertNotEquals(id1, id2);
+    }
+
+    @Test
+    public void testGetMessageHash() {
+
+        String hash1 = message1.getMessageHash();
+        String hash2 = message2.getMessageHash();
+
+        assertNotNull(hash1);
+        assertNotNull(hash2);
+
+        assertNotEquals(hash1, hash2);
+    }
+
+    // ================= MESSAGE LENGTH TESTS =================
+
+    @Test
+    public void testMessageLengthValidation_Success() {
+
+        String result =
+                validateMessageLength(
+                        message1.getMessageContent()
+                );
+
+        assertEquals(
+                "message ready to send",
+                result
+        );
+    }
+
+    @Test
+    public void testMessageLengthValidation_Failure() {
+
+        String longMessage =
+                new String(new char[255]).replace('\0', 'A');
+
+        String validationResult =
+                validateMessageLength(longMessage);
+
+        assertEquals(
+                "Message exceeds 250 characters by 5, please reduce size",
+                validationResult
+        );
+    }
+
+    @Test
+    public void testMessageLengthValidation_ExactLimit() {
+
+        String exactLimit =
+                new String(new char[250]).replace('\0', 'X');
+
+        String result =
+                validateMessageLength(exactLimit);
+
+        assertEquals(
+                "message ready to send",
+                result
+        );
+    }
+
+    // ================= RECIPIENT VALIDATION TESTS =================
+
+    @Test
+    public void testRecipientValidation_Success() {
+
+        String result =
+                validateRecipientCell(message1);
+
+        assertEquals(
+                "cell phone number successfully captured",
+                result
+        );
+    }
+
+    @Test
+    public void testRecipientValidation_Failure() {
+
+        String result =
+                validateRecipientCell(message2);
+
+        assertEquals(
+                "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again",
+                result
+        );
+    }
+
+    @Test
+    public void testRecipientValidation_EdgeCases() {
+
+        Message emptyMsg =
+                new Message("", "Test");
+
+        assertEquals(
+                0,
+                emptyMsg.checkRecipientCell()
+        );
+
+        Message nullMsg =
+                new Message(null, "Test");
+
+        assertEquals(
+                0,
+                nullMsg.checkRecipientCell()
+        );
+    }
+
+    // ================= HASH TESTS =================
+
+    @Test
+    public void testMessageHashCorrectness() {
+
+        Message.resetTotalMessagesSent();
+
+        Message testMessage =
+                new Message(
+                        "+27718693002",
+                        "Hi Mike, can you join us for dinner tonight"
+                );
+
+        String hash =
+                testMessage.createMessageHash();
+
+        assertNotNull(hash);
+
+        assertTrue(hash.contains("HI"));
+        assertTrue(hash.contains("TONIGHT"));
+        assertTrue(hash.contains(":"));
+    }
+
+    @Test
+    public void testMessageHashSingleWord() {
+
+        Message msg =
+                new Message(
+                        "+27123456789",
+                        "Hello"
+                );
+
+        String hash = msg.createMessageHash();
+
+        assertTrue(hash.contains("HELLO"));
+    }
+
+    // ================= MESSAGE ID TESTS =================
+
+    @Test
+    public void testMessageIDCreation() {
+
+        String id1 = message1.getMessageID();
+        String id2 = message2.getMessageID();
+
+        assertEquals(10, id1.length());
+        assertEquals(10, id2.length());
+
+        assertTrue(id1.matches("\\d{10}"));
+        assertTrue(id2.matches("\\d{10}"));
+    }
+
+    @Test
+    public void testMessageIDUniqueness() {
+
+        Message msg1 =
+                new Message("+27123456789", "Test1");
+
+        Message msg2 =
+                new Message("+27123456788", "Test2");
+
+        Message msg3 =
+                new Message("+27123456787", "Test3");
+
+        assertNotEquals(
+                msg1.getMessageID(),
+                msg2.getMessageID()
+        );
+
+        assertNotEquals(
+                msg1.getMessageID(),
+                msg3.getMessageID()
+        );
+    }
+
+    // ================= MESSAGE ACTION TESTS =================
+
+    @Test
+    public void testMessageAction_Send() {
+
+        String result =
+                processMessageAction("send");
+
+        assertEquals(
+                "message successfully sent",
+                result
+        );
+    }
+
+    @Test
+    public void testMessageAction_Disregard() {
+
+        String result =
+                processMessageAction("disregard");
+
+        assertEquals(
+                "press 0 to delete message",
+                result
+        );
+    }
+
+    @Test
+    public void testMessageAction_Store() {
+
+        String result =
+                processMessageAction("store");
+
+        assertEquals(
+                "message successfully stored",
+                result
+        );
+    }
+
+    @Test
+    public void testMessageAction_Invalid() {
+
+        String result =
+                processMessageAction("invalid");
+
+        assertEquals(
+                "invalid action",
+                result
+        );
+    }
+
+    // ================= TOTAL MESSAGE TESTS =================
+
+    @Test
+    public void testTotalMessagesSent() {
+
+        Message.resetTotalMessagesSent();
+
+        assertEquals(
+                0,
+                Message.getTotalMessagesSent()
+        );
+
+        Message.incrementTotalMessages();
+
+        assertEquals(
+                1,
+                Message.getTotalMessagesSent()
+        );
+
+        Message.incrementTotalMessages();
+
+        assertEquals(
+                2,
+                Message.getTotalMessagesSent()
+        );
+    }
+
+    @Test
+    public void testTotalMessagesReset() {
+
+        Message.incrementTotalMessages();
+        Message.incrementTotalMessages();
+
+        assertEquals(
+                2,
+                Message.getTotalMessagesSent()
+        );
+
+        Message.resetTotalMessagesSent();
+
+        assertEquals(
+                0,
+                Message.getTotalMessagesSent()
+        );
+    }
+
+    // ================= COMPLETE FLOW TESTS =================
+
+    @Test
+    public void testCompleteMessageFlow_Message1() {
+
+        Message.resetTotalMessagesSent();
+
+        Message testMsg =
+                new Message(
+                        "+27718693002",
+                        "Hi Mike, can you join us for dinner tonight"
+                );
+
+        String lengthValidation =
+                validateMessageLength(
+                        testMsg.getMessageContent()
+                );
+
+        assertEquals(
+                "message ready to send",
+                lengthValidation
+        );
+
+        String recipientValidation =
+                validateRecipientCell(testMsg);
+
+        assertEquals(
+                "cell phone number successfully captured",
+                recipientValidation
+        );
+
+        String sendResult =
+                processMessageAction("send");
+
+        assertEquals(
+                "message successfully sent",
+                sendResult
+        );
+
+        Message.incrementTotalMessages();
+
+        assertEquals(
+                1,
+                Message.getTotalMessagesSent()
+        );
+    }
+
+    @Test
+    public void testCompleteMessageFlow_Message2() {
+
+        Message.resetTotalMessagesSent();
+
+        Message testMsg =
+                new Message(
+                        "08575975889",
+                        "Hi keegan, did you receive the payment?"
+                );
+
+        String recipientValidation =
+                validateRecipientCell(testMsg);
+
+        assertEquals(
+                "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again",
+                recipientValidation
+        );
+
+        String discardResult =
+                processMessageAction("disregard");
+
+        assertEquals(
+                "press 0 to delete message",
+                discardResult
+        );
+    }
+
+    // ================= EDGE CASE TESTS =================
+
+    @Test
+    public void testSpecialCharacters() {
+
+        Message specialMsg =
+                new Message(
+                        "+27123456789",
+                        "Hello @#$%^&*()"
+                );
+
+        assertNotNull(
+                specialMsg.getMessageID()
+        );
+
+        assertNotNull(
+                specialMsg.getMessageHash()
+        );
+    }
+
+    @Test
+    public void testMessageWithNewLines() {
+
+        Message newlineMsg =
+                new Message(
+                        "+27123456789",
+                        "Hello\nWorld"
+                );
+
+        assertEquals(
+                "Hello\nWorld",
+                newlineMsg.getMessageContent()
+        );
+    }
+
+    @Test
+    public void testMultipleMessages() {
+
+        for (int i = 0; i < 5; i++) {
+
+            Message msg =
+                    new Message(
+                            "+2712345678" + i,
+                            "Test message " + i
+                    );
+
+            assertNotNull(msg);
+            assertNotNull(msg.getMessageID());
+            assertNotNull(msg.getMessageHash());
+        }
+    }
+
+    @Test
+    public void testStaticMethodsIndependence() {
+
+        Message.resetTotalMessagesSent();
+
+        assertEquals(
+                0,
+                Message.getTotalMessagesSent()
+        );
+
+        Message.incrementTotalMessages();
+        Message.incrementTotalMessages();
+
+        assertEquals(
+                2,
+                Message.getTotalMessagesSent()
+        );
+
+        Message.resetTotalMessagesSent();
+
+        assertEquals(
+                0,
+                Message.getTotalMessagesSent()
+        );
+    }
+}
